@@ -1,0 +1,122 @@
+# Import necessary libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+scaled_data = scaler.fit_transform(df)
+# Check for missing values
+missing_values = df.isnull().sum()
+print("Missing Values in Each Column:\n", missing_values[missing_values > 0])
+
+# Check for interval data types
+interval_cols = [col for col in df.columns if isinstance(df[col].iloc[0], pd._libs.interval.Interval)]
+print("\nColumns with Interval Data Types:", interval_cols)
+
+# Check if all columns are numeric
+non_numeric_cols = df.select_dtypes(exclude=[np.number]).columns
+print("\nNon-Numeric Columns:", non_numeric_cols)
+
+# Summary:
+if missing_values.sum() == 0 and not interval_cols and non_numeric_cols.empty:
+    print("\nDf is continuous with no blanks, intervals, or non-numeric values.")
+else:
+    print("\nDf requires cleaning for continuous numeric analysis.")
+    # Using .shape attribute
+total_rows = df.shape[0]
+print("Total number of rows:", total_rows)
+
+# Or, using len() function
+print("Total number of rows:", len(df))
+
+from sklearn.model_selection import cross_val_score, KFold
+from sklearn.metrics import make_scorer, mean_squared_error
+import numpy as np
+X = df[['Speed', 'AD', 'Fuel', 'Mileage', 'Engine', 'Age', 'Weight', 'AFR', 'ALT']]
+y = df['CO2']
+
+xgb_model = XGBRegressor(objective='reg:squarederror', n_estimators=50, max_depth=3, random_state=42)
+xgb_model.fit(X_train, y_train)
+
+y_train_pred = xgb_model.predict(X_train)
+y_test_pred = xgb_model.predict(X_test)
+
+train_residuals = y_train - y_train_pred
+test_residuals = y_test - y_test_pred
+# Define 5-fold CV
+kf = KFold(n_splits=5, shuffle=True, random_state=42)
+
+# Scorer for RMSE
+rmse_scorer = make_scorer(mean_squared_error, squared=False)
+
+# Evaluate using cross_val_score on training data
+cv_rmse_scores = cross_val_score(xgb_model, X_train, y_train, cv=kf, scoring=rmse_scorer)
+
+print("5-Fold CV RMSE Scores:", cv_rmse_scores.round(3))
+print("Mean CV RMSE:", np.mean(cv_rmse_scores).round(3))
+
+import xgboost as xgb
+
+# Convert training data into DMatrix
+dtrain = xgb.DMatrix(X_train, label=y_train)
+
+# Set XGBoost parameters
+params = {
+    'objective': 'reg:squarederror',
+    'max_depth': 3,
+    'learning_rate': 0.1,
+    'seed': 42
+}
+
+# Run 5-fold cross-validation
+cv_results = xgb.cv(
+    params,
+    dtrain,
+    num_boost_round=50,
+    nfold=5,
+    metrics={'rmse'},
+    seed=42,
+    shuffle=True,
+    as_pandas=True,
+    verbose_eval=False
+)
+
+# Show final RMSE from CV
+print("Final 5-Fold CV RMSE:", cv_results['test-rmse-mean'].values[-1])
+# Reshape y_test and y_pred for linear regression if necessary
+y_test_reshaped = np.array(y_test).reshape(-1, 1)
+y_pred_reshaped = np.array(y_pred).reshape(-1, 1)
+
+# Fit a linear regression model to actual vs predicted values from XGBoost
+regression_model = LinearRegression()
+regression_model.fit(y_pred_reshaped, y_test_reshaped)
+
+# Get the slope (coefficient) and intercept of the fitted line
+slope = regression_model.coef_[0][0]
+intercept = regression_model.intercept_[0]
+
+# Display the equation
+print(f"The equation of the relationship between actual CO₂ and predicted CO₂ is:")
+print(f"Actual CO₂ = {slope:.4f} * Predicted CO₂ + {intercept:.4f}")
+from sklearn.model_selection import cross_val_predict
+import matplotlib.pyplot as plt
+from xgboost import XGBRegressor
+
+# Re-initialize model to ensure clean fit
+xgb_model_cv = XGBRegressor(objective='reg:squarederror', n_estimators=50, max_depth=3, random_state=42)
+
+# Get cross-validated predictions
+y_train_cv_pred = cross_val_predict(xgb_model_cv, X_train, y_train, cv=5)
+
+# Plot: Actual vs Predicted using CV
+plt.figure(figsize=(8, 6))
+plt.scatter(y_train, y_train_cv_pred, color='teal', alpha=0.5, label='5-Fold CV Predicted')
+plt.plot([y_train.min(), y_train.max()], [y_train.min(), y_train.max()], 'r--', label='Ideal Fit')
+plt.xlabel("Actual CO₂ Emissions")
+plt.ylabel("Predicted CO₂ Emissions (5-Fold CV)")
+plt.title("5-Fold Cross-Validated Predictions vs Actual (Training Set)")
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
