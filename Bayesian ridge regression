@@ -1,0 +1,113 @@
+from sklearn.linear_model import BayesianRidge
+
+# Initialize Bayesian Ridge Regression model
+bayesian_model = BayesianRidge()
+
+# Fit the model to the training data
+bayesian_model.fit(X_train, y_train)
+
+# Make predictions for both training and testing sets
+y_pred_train_bayes = bayesian_model.predict(X_train)
+y_pred_test_bayes = bayesian_model.predict(X_test)
+
+# Calculate performance metrics for Bayesian Regression
+train_mse_bayes = mean_squared_error(y_train, y_pred_train_bayes)
+test_mse_bayes = mean_squared_error(y_test, y_pred_test_bayes)
+train_r2_bayes = r2_score(y_train, y_pred_train_bayes)
+test_r2_bayes = r2_score(y_test, y_pred_test_bayes)
+
+# Retrieve coefficients and intercept from Bayesian Ridge model
+bayesian_coefficients = bayesian_model.coef_
+bayesian_intercept = bayesian_model.intercept_
+# Generating simulated data with Gaussian weights
+np.random.seed(0)
+n_samples, n_features = 100, 100
+X = np.random.randn(n_samples, n_features)  # Create Gaussian data
+# Create weights with a precision lambda_ of 4.
+lambda_ = 4.0
+w = np.zeros(n_features)
+# Only keep 10 weights of interest
+relevant_features = np.random.randint(0, n_features, 10)
+for i in relevant_features:
+    w[i] = stats.norm.rvs(loc=0, scale=1.0 / np.sqrt(lambda_))
+# Create noise with a precision alpha of 50.
+alpha_ = 50.0
+noise = stats.norm.rvs(loc=0, scale=1.0 / np.sqrt(alpha_), size=n_samples)
+# Create the target
+y = np.dot(X, w) + noise
+
+# #############################################################################
+# Fit the Bayesian Ridge Regression and an OLS for comparison
+clf = BayesianRidge(compute_score=True)
+clf.fit(X, y)
+
+ols = LinearRegression()
+ols.fit(X, y)
+
+# Organize performance metrics and coefficients
+bayesian_results = {
+    "Metric": ["Training MSE", "Testing MSE", "Training R²", "Testing R²"],
+    "Value": [train_mse_bayes, test_mse_bayes, train_r2_bayes, test_r2_bayes],
+    "Intercept": [bayesian_intercept],
+    "Coefficients": list(bayesian_coefficients)
+}
+
+# Display performance and coefficient results
+import ace_tools as tools; tools.display_dataframe_to_user(name="Bayesian Regression Results", dataframe=pd.DataFrame(bayesian_results))
+
+(train_mse_bayes, test_mse_bayes, train_r2_bayes, test_r2_bayes, bayesian_coefficients, bayesian_intercept)
+# Organize model performance metrics into a DataFrame
+bayesian_performance = {
+    "Metric": ["Training MSE", "Testing MSE", "Training R²", "Testing R²"],
+    "Value": [train_mse_bayes, test_mse_bayes, train_r2_bayes, test_r2_bayes]
+}
+performance_df_bayes = pd.DataFrame(bayesian_performance)
+
+# Organize coefficients into a DataFrame
+coefficients_df_bayes = pd.DataFrame({
+    "Feature": ['Speed', 'AD', 'Fuel'],
+    "Coefficient": bayesian_coefficients
+}, index=[1, 2, 3])
+
+# Display the two tables to the user
+import ace_tools as tools; 
+tools.display_dataframe_to_user(name="Bayesian Regression Performance Metrics", dataframe=performance_df_bayes)
+tools.display_dataframe_to_user(name="Bayesian Regression Coefficients", dataframe=coefficients_df_bayes)
+# Organize Bayesian regression performance metrics in a table
+bayesian_performance_metrics = {
+    "Metric": ["Training MSE", "Testing MSE", "Training R²", "Testing R²"],
+    "Value": [train_mse_bayes, test_mse_bayes, train_r2_bayes, test_r2_bayes]
+}
+
+# Convert to a DataFrame for display
+bayesian_performance_df = pd.DataFrame(bayesian_performance_metrics)
+
+# Display the performance metrics to the user in tabular form
+import ace_tools as tools; tools.display_dataframe_to_user(name="Bayesian Regression Performance Metrics", dataframe=bayesian_performance_df)
+# Create the Bayesian regression equation as a string for display
+bayesian_equation = (f"Predicted CO2 = {bayesian_coefficients[0]:.3f} * Speed + "
+                     f"{bayesian_coefficients[1]:.3f} * AD + "
+                     f"{bayesian_coefficients[2]:.3f} * Fuel + "
+                     f"{bayesian_intercept:.3f}")
+
+# Plot 2: Predicted vs Actual CO2 (Training Data) with Bayesian Regression Equation
+plt.figure(figsize=(8, 6))
+plt.scatter(y_train, y_pred_train_bayes, color='blue', alpha=0.6, label='Training Data')
+plt.plot([y.min(), y.max()], [y.min(), y.max()], 'k--', lw=2)
+plt.xlabel('Actual CO2')
+plt.ylabel('Predicted CO2')
+plt.title('Predicted vs Actual CO2 (Training Data) - Bayesian Regression')
+plt.text(0.05, 0.9, bayesian_equation, transform=plt.gca().transAxes, fontsize=10, color="blue", bbox=dict(facecolor='white', alpha=0.5))
+plt.legend()
+plt.show()
+
+# Plot 3: Predicted vs Actual CO2 (Testing Data) with Bayesian Regression Equation
+plt.figure(figsize=(8, 6))
+plt.scatter(y_test, y_pred_test_bayes, color='red', alpha=0.6, label='Testing Data')
+plt.plot([y.min(), y.max()], [y.min(), y.max()], 'k--', lw=2)
+plt.xlabel('Actual CO2')
+plt.ylabel('Predicted CO2')
+plt.title('Predicted vs Actual CO2 (Testing Data) - Bayesian Regression')
+plt.text(0.05, 0.9, bayesian_equation, transform=plt.gca().transAxes, fontsize=10, color="red", bbox=dict(facecolor='white', alpha=0.5))
+plt.legend()
+plt.show()
