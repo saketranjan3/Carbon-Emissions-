@@ -1,0 +1,63 @@
+from sklearn.linear_model import LinearRegression, Lasso
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Define features and target
+X = df[['Speed', 'AD', 'Fuel']]
+y = df['CO2']
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Initialize models
+model_1 = LinearRegression()
+model_2 = DecisionTreeRegressor(random_state=42)
+model_3 = RandomForestRegressor(n_estimators=50, random_state=42)
+model_4 = Lasso(alpha=0.1, random_state=42)
+
+# Train models
+model_1.fit(X_train, y_train)
+model_2.fit(X_train, y_train)
+model_3.fit(X_train, y_train)
+model_4.fit(X_train, y_train)
+
+# Generate predictions
+df['Model_1_Pred'] = model_1.predict(X)
+df['Model_2_Pred'] = model_2.predict(X)
+df['Model_3_Pred'] = model_3.predict(X)
+df['Model_4_Pred'] = model_4.predict(X)
+
+# Calculate residuals for each model
+df['Model_1_Residual'] = df['CO2'] - df['Model_1_Pred']
+df['Model_2_Residual'] = df['CO2'] - df['Model_2_Pred']
+df['Model_3_Residual'] = df['CO2'] - df['Model_3_Pred']
+df['Model_4_Residual'] = df['CO2'] - df['Model_4_Pred']
+
+# Bin the speed data into specified ranges (e.g., 10 bins)
+df['Speed_Bin'] = pd.cut(df['Speed'], bins=10)
+
+# Aggregate mean residuals for each model by Speed Bin
+heatmap_data = df.groupby('Speed_Bin').agg({
+    'Model_1_Residual': 'mean',
+    'Model_2_Residual': 'mean',
+    'Model_3_Residual': 'mean',
+    'Model_4_Residual': 'mean'
+}).reset_index()
+# Convert Speed_Bin to string for display on the heatmap axis
+heatmap_data['Speed_Bin'] = heatmap_data['Speed_Bin'].astype(str)
+
+# Transpose for heatmap with models as rows and speed bins as columns
+heatmap_data = heatmap_data.set_index('Speed_Bin').T
+
+# Plotting the heatmap
+plt.figure(figsize=(12, 8))
+sns.heatmap(heatmap_data, fmt=".2f", cmap="coolwarm", center=0, linewidths=0.5, cbar_kws={'label': 'Mean Residuals'})
+plt.title("Model Performance by Speed Bin (Mean Residuals)")
+plt.xlabel("Speed Bins")
+plt.ylabel("Models")
+plt.show()
