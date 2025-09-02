@@ -9,7 +9,7 @@ This repository is the begining of the Carbon Emission Intensity Modeling in Fre
 
 1. Clone the repository:
 ```bash
-git clone [https://github.com/saketranjan3/Carbon-Emissions.git]
+git clone [https://github.com/saketranjan3/Carbon-Emissions-]
 cd CO2_pred
 ```
 
