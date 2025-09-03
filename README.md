@@ -171,9 +171,6 @@ After running the evaluation script, the following output files will be generate
 - Located in the `results_plot` subfolder
 - If mode plotting is enabled, additional plots with mode lines will be in `results_plot_with_mode`
 
-### Carbon emission intensity prediction
-- Detection results from the YOLO model are saved in the `predictions` subfolder
-- Visualizations of detected NPF events with bounding boxes
 ### Model outputs
 - Trained XGBoost model (.json)
 - Predictions on the test dataset (predictions.csv)
